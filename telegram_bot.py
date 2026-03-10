@@ -1,7 +1,7 @@
 import requests
 
-TOKEN = "YOUR_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
+TOKEN = "8686620867:AAHmSBZUww3ySTfLA40bpM0Bs_3r1-7pSMg"
+CHAT_ID = "1969573200"
 
 def send_alert(message):
 
