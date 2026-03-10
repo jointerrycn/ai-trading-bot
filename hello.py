@@ -1,1 +1,1 @@
-echo 'print("Hello GitHub")
+echo 'print("Tính năng mới đang phát triển")
