@@ -1,0 +1,16 @@
+# Các file biên dịch của Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Môi trường ảo (Quan trọng nhất)
+venv/
+.venv/
+env/
+
+# File cấu hình cá nhân của IDE
+.vscode/
+.idea/
+
+# File chứa thông tin bảo mật
+.env
