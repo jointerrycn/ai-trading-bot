@@ -79,7 +79,7 @@ def trend_ok(df_1h, swing_length=2):
 def check_setup(df_1h, df_15m):
     # ❌ Lọc trend 1H
     if not trend_ok(df_1h):
-        return False
+        return False, 0  # <--- Đã sửa
 
     # Định nghĩa cửa sổ quan sát (15 nến gần nhất) để tìm Setup
     lookback = 15
@@ -90,7 +90,7 @@ def check_setup(df_1h, df_15m):
     prev_highs = df_15m["high"].iloc[-(lookback+15):-lookback]
     
     if prev_lows.empty or prev_highs.empty:
-        return False
+        return False, 0  # <--- Đã sửa
         
     sweep_level = prev_lows.min()
     bos_level = prev_highs.max()
@@ -106,20 +106,19 @@ def check_setup(df_1h, df_15m):
         if not sweep_found:
             if row["low"] < sweep_level and row["close"] > sweep_level:
                 sweep_found = True
-                continue # Tìm thấy rồi thì xét nến tiếp theo
+                continue 
                 
-        # 🔥 Bước 2: Tìm Break (chỉ tính nến diễn ra SAU Sweep)
+        # 🔥 Bước 2: Tìm Break 
         if sweep_found and not bos_found:
             if row["close"] > bos_level:
                 bos_found = True
                 
     # 🔥 Bước 3: Check HL (Higher Low)
-    # Nếu đã có đủ Sweep và Break, kiểm tra xem đáy nến hiện tại có giữ được trên đáy Sweep không
     if sweep_found and bos_found:
         current_low = df_15m["low"].iloc[-1]
-        sweep_bottom = window["low"].min() # Đáy thấp nhất trong cửa sổ (chính là đáy sweep)
+        sweep_bottom = window["low"].min() 
         
         if current_low > sweep_bottom:
-            return True,sweep_bottom # ✅ FULL SETUP PASSED!
+            return True, sweep_bottom # ✅ Đã chuẩn
 
-    return False, None
+    return False, 0  # ✅ Đã chuẩn

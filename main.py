@@ -25,7 +25,7 @@ def run():
             print(f"👉 Trend 1H: {'✅ Tốt' if trend else '❌ Xấu'}")
 
             # 3. Check toàn bộ setup (Trend -> Sweep -> Break -> HL)
-            is_setup_valid = check_setup(df_1h, df_15m)
+            is_setup_valid,sl_price = check_setup(df_1h, df_15m)
 
             if is_setup_valid:
                 current_candle_time = df_15m['time'].iloc[-1] 
@@ -47,7 +47,7 @@ def run():
                     msg += f"✅ Đã xác nhận chuỗi: Trend ➔ Sweep ➔ Break ➔ HL.\n\n"
                     msg += f"🤖 **AI ĐÁNH GIÁ (GEMINI):**\n_{ai_comment}_\n\n"
                     msg += f"👉 Chờ giá Retest lại vùng HL để Entry!"
-                    
+                    msg += f"🛑 Stoploss tại: {sl_price}"
                     # Bước D: Bắn Telegram kèm hình ảnh chart
                     send_photo_and_message(image_filename, msg)
                     print(f"🚀 Đã gửi Telegram + AI cho {symbol}!")
