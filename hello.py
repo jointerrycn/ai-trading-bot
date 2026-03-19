@@ -1,1 +1,1 @@
-echo 'print("Tính năng mới đang phát triển")
+echo 'print("Tính năng mới adfádsa đang phát triển")
