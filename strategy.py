@@ -36,13 +36,14 @@ def check_setup(df_1h, df_15m):
     if not trend_ok(df_1h):
         return False
 
-    # 👉 chỉ cần 2/3 điều kiện thay vì tất cả
+    # 🔥 sweep là bắt buộc
+    if not sweep(df_15m):
+        return False
+
+    # 👉 còn lại cần ít nhất 1
     conditions = [
-        sweep(df_15m),
         break_structure(df_15m),
         hl_valid(df_15m)
     ]
 
-    score = sum(conditions)
-
-    return score >= 2
+    return any(conditions)
