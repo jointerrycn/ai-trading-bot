@@ -1,90 +1,164 @@
 import pandas as pd
 import time
-from data import get_ohlc
+import ccxt
+import json
+from collections import defaultdict
+
 from strategy import check_setup
+from strategy_short import check_short_setup
 
-SYMBOL = "BTC/USDT"
+# =========================
+# CONFIG
+# =========================
+SYMBOLS = ["BTC/USDT","ETH/USDT","SOL/USDT"]
+TEST_DAYS = 90
+VERBOSE = True
 
-print(f"📥 Đang tải dữ liệu {SYMBOL} qua CCXT...")
-# Lưu ý: Tăng limit lên 1500 để có đủ data test dài ngày
-df_15m = get_ohlc(SYMBOL, "15m", limit=1500) 
-df_1h = get_ohlc(SYMBOL, "1h", limit=1000)
+exchange = ccxt.binance()
 
-print(f"📊 Dữ liệu 15m: {len(df_15m)} nến | 1H: {len(df_1h)} nến")
-print("🚀 Bắt đầu quét Backtest (Giả lập Real-time)...\n")
+def log(msg):
+    if VERBOSE:
+        print(msg)
+
+def get_data(symbol, timeframe, days):
+    now = exchange.milliseconds()
+    since = now - days * 24 * 60 * 60 * 1000
+
+    data = []
+    while since < now:
+        ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=1000)
+        if not ohlcv:
+            break
+        data += ohlcv
+        since = ohlcv[-1][0] + 1
+        time.sleep(0.2)
+
+    df = pd.DataFrame(data, columns=['time','open','high','low','close','volume'])
+    df['time'] = pd.to_datetime(df['time'], unit='ms') + pd.Timedelta(hours=7)
+    df.set_index('time', inplace=True)
+    return df
 
 trades = []
-last_signal_time = None
 in_trade = False
 
-entry_price = sl_price = tp_price = 0
+for symbol in SYMBOLS:
+    print(f"\n🚀 TESTING {symbol}")
 
-# Bắt đầu từ nến 200 để có đủ data 1H tính EMA
-for i in range(200, len(df_15m)):
-    current_time = df_15m.index[i] if isinstance(df_15m.index, pd.DatetimeIndex) else df_15m['time'].iloc[i]
-    current_candle = df_15m.iloc[i]
-    
-    # 1. QUẢN LÝ LỆNH ĐANG CHẠY
-    if in_trade:
-        if current_candle['low'] <= sl_price:
-            trades[-1]['status'] = '❌ Thua (Cắn SL)'
-            trades[-1]['exit_time'] = current_time
-            in_trade = False
-            continue
-            
-        if current_candle['high'] >= tp_price:
-            trades[-1]['status'] = '✅ Thắng (Chạm TP)'
-            trades[-1]['exit_time'] = current_time
-            in_trade = False
-            continue
+    df_15m = get_data(symbol, "15m", TEST_DAYS)
+    df_1h = get_data(symbol, "1h", TEST_DAYS + 15)
 
-    # 2. TÌM LỆNH MỚI (Gọi hàm TỪ FILE STRATEGY CỦA BẠN)
-    if not in_trade:
-        sub_df_15m = df_15m.iloc[:i+1]
-        
-        # Nếu data của bạn dùng index là time thì dùng loc, nếu không thì so sánh cột
-        if isinstance(df_1h.index, pd.DatetimeIndex):
-            sub_df_1h = df_1h[df_1h.index <= current_time]
-        else:
-            sub_df_1h = df_1h[df_1h['time'] <= current_time]
-        
-        if len(sub_df_1h) < 200: continue
-            
-        # 🔥 GỌI HÀM CỦA BẠN TẠI ĐÂY
-        is_setup, sweep_bottom = check_setup(sub_df_1h, sub_df_15m)
-        
-        if is_setup and current_time != last_signal_time:
-            entry_price = current_candle['close']
-            sl_price = sweep_bottom
-            risk = entry_price - sl_price
-            tp_price = entry_price + (risk * 2) # RR 1:2
-            
+    for i in range(200, len(df_15m)):
+        current_time = df_15m.index[i]
+        candle = df_15m.iloc[i]
+
+        # 🔍 SCAN LOG
+        if i % 100 == 0:
+            log(f"\n🔍 Scan: {current_time}")
+
+        # ================= EXIT =================
+        if in_trade:
+            t = trades[-1]
+
+            if t["direction"] == "LONG":
+                if candle["low"] <= t["sl"]:
+                    log(f"❌ SL HIT {symbol} at {current_time}")
+                    t["status"] = "SL"
+                    in_trade = False
+
+                elif candle["high"] >= t["tp"]:
+                    log(f"✅ TP HIT {symbol} at {current_time}")
+                    t["status"] = "TP"
+                    in_trade = False
+
+            else:
+                if candle["high"] >= t["sl"]:
+                    log(f"❌ SL HIT {symbol} at {current_time}")
+                    t["status"] = "SL"
+                    in_trade = False
+
+                elif candle["low"] <= t["tp"]:
+                    log(f"✅ TP HIT {symbol} at {current_time}")
+                    t["status"] = "TP"
+                    in_trade = False
+
+        # ================= ENTRY =================
+        if not in_trade:
+            sub_15m = df_15m.iloc[:i+1]
+            sub_1h = df_1h[df_1h.index <= current_time]
+
+            if len(sub_1h) < 200:
+                continue
+
+            long_ok, long_data = check_setup(sub_1h, sub_15m)
+            short_ok, short_data = check_short_setup(sub_1h, sub_15m)
+
+            if not (long_ok or short_ok):
+                continue
+
+            log(f"\n⚡ SETUP FOUND {symbol} at {current_time}")
+
+            if long_ok:
+                log(f"→ LONG | Entry {long_data['entry']:.2f} SL {long_data['sl']:.2f} TP {long_data['tp']:.2f}")
+
+            if short_ok:
+                log(f"→ SHORT | Entry {short_data['entry']:.2f} SL {short_data['sl']:.2f} TP {short_data['tp']:.2f}")
+
+            if long_ok:
+                direction = "LONG"
+                data = long_data
+            else:
+                direction = "SHORT"
+                data = short_data
+
+            entry = data["entry"]
+            sl = data["sl"]
+            tp = data["tp"]
+
+            # ⏳ ENTRY CHECK
+            if direction == "LONG" and candle["low"] > entry:
+                log("⏳ LONG chưa chạm entry")
+                continue
+
+            if direction == "SHORT" and candle["high"] < entry:
+                log("⏳ SHORT chưa chạm entry")
+                continue
+
+            # RR FILTER
+            risk = abs(entry - sl)
+            rr = abs(tp - entry) / risk if risk != 0 else 0
+
+            if rr < 1.3:
+                log(f"⛔ Skip RR thấp: {rr:.2f}")
+                continue
+
+            log(f"\n💰 ENTER {direction} {symbol}")
+            log(f"Entry {entry:.2f} | SL {sl:.2f} | TP {tp:.2f} | RR {rr:.2f}")
+
             trades.append({
-                'entry_time': current_time,
-                'entry_price': entry_price,
-                'sl': sl_price,
-                'tp': tp_price,
-                'status': 'Đang chạy...',
-                'exit_time': None
+                "symbol": symbol,
+                "time": current_time,
+                "direction": direction,
+                "entry": entry,
+                "sl": sl,
+                "tp": tp,
+                "status": "RUN"
             })
-            
-            last_signal_time = current_time
+
             in_trade = True
 
-# 3. IN KẾT QUẢ
-print("="*40)
-print(f"🏆 KẾT QUẢ BACKTEST {SYMBOL}")
-print("="*40)
+# ================= RESULT =================
+win = loss = 0
 
-win = loss = pending = 0
 for t in trades:
-    print(f"🕒 {t['entry_time']} | Entry: ${t['entry_price']:.1f} | SL: ${t['sl']:.1f} | TP: ${t['tp']:.1f}")
-    if 'Thắng' in t['status']: win += 1
-    elif 'Thua' in t['status']: loss += 1
-    else: pending += 1
-    print(f"   => {t['status']}")
-    print("-" * 30)
+    if t["status"] == "TP":
+        win += 1
+    elif t["status"] == "SL":
+        loss += 1
 
-print(f"\n📊 TỔNG KẾT: {len(trades)} lệnh (✅ {win} Thắng | ❌ {loss} Thua | ⏳ {pending} Đang chạy)")
-if (win + loss) > 0:
-    print(f"🎯 Win Rate: {(win / (win + loss) * 100):.1f}%")
+print("\n===== RESULT =====")
+print("Trades:", len(trades))
+print("Win:", win)
+print("Loss:", loss)
+
+if win + loss > 0:
+    print("Winrate:", round(win/(win+loss)*100,2), "%")
