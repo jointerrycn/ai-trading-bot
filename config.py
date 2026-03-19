@@ -1,5 +1,6 @@
 API_TOKEN = "8686620867:AAHmSBZUww3ySTfLA40bpM0Bs_3r1-7pSMg"
 CHAT_ID = "1969573200"
+GEMINI_API_KEY = "AIzaSyBdJ1T-DdoebF0AhESqpv7uLQT3sEdKqZ4"
 
 SYMBOLS = [
     "BTC/USDT",
@@ -11,6 +12,10 @@ SYMBOLS = [
     "DOGE/USDT",
     "LINK/USDT",
     "LTC/USDT",
+    "S/USDT",
+    "SUI/USDT",
+    "SUI/USDT",
+    "XAU/USDT",
     "AVAX/USDT"
 ]
 
