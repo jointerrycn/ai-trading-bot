@@ -1,13 +1,10 @@
 import requests
+from config import API_TOKEN, CHAT_ID
 
-TOKEN = "8686620867:AAHmSBZUww3ySTfLA40bpM0Bs_3r1-7pSMg"
-CHAT_ID = "1969573200"
-
-def send_alert(message):
-
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-
-    requests.post(url, data={
+def send_message(text):
+    url = f"https://api.telegram.org/bot{API_TOKEN}/sendMessage"
+    data = {
         "chat_id": CHAT_ID,
-        "text": message
-    })
+        "text": text
+    }
+    requests.post(url, data=data)

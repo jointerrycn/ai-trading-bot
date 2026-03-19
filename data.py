@@ -1,15 +1,18 @@
 import ccxt
 import pandas as pd
 
-exchange = ccxt.binance()
+exchange = ccxt.binance({
+    'options': {
+        'defaultType': 'future'
+    }
+})
 
-def fetch_ohlcv(symbol="BTC/USDT", timeframe="15m", limit=200):
-
-    ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-
-    df = pd.DataFrame(
-        ohlcv,
-        columns=["timestamp","open","high","low","close","volume"]
+def get_ohlc(symbol, timeframe, limit=200):
+    ohlc = exchange.fetch_ohlcv(
+        symbol,
+        timeframe,
+        limit=limit,
+        params={"price": "mark"}  # 🔥 thêm dòng này
     )
-
+    df = pd.DataFrame(ohlc, columns=["time","open","high","low","close","volume"])
     return df

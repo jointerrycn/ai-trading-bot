@@ -1,1 +1,0 @@
-echo 'print("Tính năng mới đang phát triển")
