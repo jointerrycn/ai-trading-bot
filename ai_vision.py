@@ -3,7 +3,7 @@ import google.generativeai as genai
 import os
 
 # 🔥 CẤU HÌNH API GEMINI (Lấy miễn phí tại Google AI Studio)
-GEMINI_API_KEY = "AIzaSyBdJ1T-DdoebF0AhESqpv7uLQT3sEdKqZ4"
+GEMINI_API_KEY = ""
 genai.configure(api_key=GEMINI_API_KEY)
 
 def create_chart_image(df, symbol, filename="temp_chart.png"):

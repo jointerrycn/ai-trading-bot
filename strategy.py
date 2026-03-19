@@ -120,6 +120,6 @@ def check_setup(df_1h, df_15m):
         sweep_bottom = window["low"].min() # Đáy thấp nhất trong cửa sổ (chính là đáy sweep)
         
         if current_low > sweep_bottom:
-            return True # ✅ FULL SETUP PASSED!
+            return True,sweep_bottom # ✅ FULL SETUP PASSED!
 
-    return False
+    return False, None
