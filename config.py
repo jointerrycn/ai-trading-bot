@@ -1,23 +1,9 @@
-API_TOKEN = "8686620867:AAHmSBZUww3ySTfLA40bpM0Bs_3r1-7pSMg"
-CHAT_ID = "1969573200"
-GEMINI_API_KEY = ""
+import os
+from dotenv import load_dotenv
 
-SYMBOLS = [
-    "BTC/USDT",
-    "ETH/USDT",
-    "SOL/USDT",
-    "BNB/USDT",
-    "XRP/USDT",
-    "ADA/USDT",
-    "DOGE/USDT",
-    "LINK/USDT",
-    "LTC/USDT",
-    "S/USDT",
-    "SUI/USDT",
-    "SUI/USDT",
-    "XAU/USDT",
-    "AVAX/USDT"
-]
+load_dotenv()
 
-TIMEFRAME_1H = "1h"
-TIMEFRAME_15M = "15m"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
