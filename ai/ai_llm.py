@@ -4,7 +4,7 @@ from config import GEMINI_API_KEY
 
 # Khởi tạo client
 client = genai.Client(api_key=GEMINI_API_KEY)
-
+print(GEMINI_API_KEY)
 def analyze_with_ai(prompt: str, image_path: str) -> str:
     try:
         img = Image.open(image_path)
