@@ -130,11 +130,11 @@ while True:
             log(f"🕒 Time: {current_time} (Hour: {hour})")
 
             # ===== SESSION =====
-            if not is_killzone(hour):
-                log("⛔ Không phải killzone → skip")
-                continue
+            #if not is_killzone(hour):
+            #    log("⛔ Không phải killzone → skip")
+            #    continue
 
-            log("✅ Đúng killzone")
+            #log("✅ Đúng killzone")
 
             # ===== SMC =====
             signal, data = check_smc(df_1h, df_15m)
