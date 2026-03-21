@@ -1,9 +1,12 @@
-import google.generativeai as genai
+from google import genai
 from config import GEMINI_API_KEY
 
-genai.configure(api_key=GEMINI_API_KEY)
+# tạo client
+client = genai.Client(api_key=GEMINI_API_KEY)
 
-print("Danh sách các model khả dụng cho bạn:")
-for m in genai.list_models():
-    if 'generateContent' in m.supported_generation_methods:
-        print(m.name)
+print("Danh sách các model khả dụng:")
+
+models = client.models.list()
+
+for m in models:
+    print(m.name)
