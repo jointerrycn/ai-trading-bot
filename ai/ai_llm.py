@@ -1,18 +1,16 @@
-from google import genai
+import google.generativeai as genai
 from PIL import Image
 from config import GEMINI_API_KEY
 
-# Khởi tạo client
-client = genai.Client(api_key=GEMINI_API_KEY)
-print(GEMINI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+
 def analyze_with_ai(prompt: str, image_path: str) -> str:
     try:
         img = Image.open(image_path)
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[prompt, img]
-        )
+        model = genai.GenerativeModel("gemini-2.5-flash")
+
+        response = model.generate_content([prompt, img])
 
         return response.text
 
