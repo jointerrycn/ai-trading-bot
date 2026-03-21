@@ -1,5 +1,8 @@
 ccxt
 pandas
 numpy
-ta
 requests
+matplotlib
+mplfinance
+python-dotenv
+google-generativeai
